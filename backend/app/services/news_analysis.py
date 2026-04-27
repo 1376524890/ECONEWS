@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import os
 from datetime import datetime
 
 from app.schemas.news import (
@@ -11,13 +13,33 @@ from app.schemas.news import (
 )
 from app.services.knowledge_base import DEFAULT_SUMMARY_TEMPLATE, SOURCE_AUTHORITY
 from app.services.market_data import MarketDataService
-from app.services.nlp_provider import HeuristicNLPProvider
+from app.services.nlp_provider import HeuristicNLPProvider, ProviderResult
 from app.services.scoring import clamp, compute_nis, impact_level
+
+logger = logging.getLogger(__name__)
+
+
+def _create_provider() -> HeuristicNLPProvider:
+    provider_type = os.getenv("MODEL_PROVIDER", "heuristic").lower()
+
+    if provider_type == "bert":
+        try:
+            from app.services.bert_provider import BertNLPProvider
+
+            logger.info("使用 BertNLPProvider 作为 NLP 提供者")
+            return BertNLPProvider()
+        except ImportError as e:
+            logger.warning("transformers 库不可用，回退到启发式提供者: %s", e)
+        except Exception as e:
+            logger.warning("BertNLPProvider 初始化失败，回退到启发式提供者: %s", e)
+
+    logger.info("使用 HeuristicNLPProvider 作为 NLP 提供者")
+    return HeuristicNLPProvider()
 
 
 class NewsAnalysisService:
     def __init__(self) -> None:
-        self.provider = HeuristicNLPProvider()
+        self.provider = _create_provider()
         self.market_data = MarketDataService()
 
     def analyze(self, payload: NewsAnalysisRequest) -> NewsAnalysisResponse:
