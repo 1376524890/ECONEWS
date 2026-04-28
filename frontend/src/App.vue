@@ -9,7 +9,7 @@ const route = useRoute();
     <header class="topbar">
       <div>
         <p class="eyebrow">Quant + NLP + Macro Monitor</p>
-        <h1>EconoNews Intelligence Hub</h1>
+        <h1>EconoNews</h1>
       </div>
       <nav class="nav">
         <RouterLink :class="{ active: route.name === 'dashboard' }" to="/">数据看板</RouterLink>
@@ -22,4 +22,3 @@ const route = useRoute();
     </main>
   </div>
 </template>
-
